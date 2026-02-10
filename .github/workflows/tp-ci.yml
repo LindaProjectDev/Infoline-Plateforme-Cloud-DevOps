@@ -1,68 +1,76 @@
-name: TP CI/CD
+name: TP CI/CD  # Nom du workflow, c'est juste pour l'identifier dans GitHub Actions
 
-on:
-  push:
+on:  # Déclencheurs du workflow
+  push:  # Le workflow se déclenche quand on pousse du code
     branches:
-      - main
-  pull_request:
+      - main  # uniquement sur la branche main
+  pull_request:  # ou lorsqu'une pull request est ouverte ou mise à jour
 
-jobs:
+jobs:  # Définition des jobs (tâches) à exécuter
 
-  build-springboot:
-    name: Build & Test Spring Boot
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  build-springboot:  # Nom interne du job pour construire le backend Spring Boot
+    name: Build & Test Spring Boot  # Nom affiché dans l'interface GitHub Actions
+    runs-on: ubuntu-latest  # Indique que le job s'exécute sur un runner Ubuntu récent
+    steps:  # Les étapes à exécuter pour ce job
+      - name: Checkout repository  # Étape pour récupérer le code du dépôt
+        uses: actions/checkout@v3  # Utilise l'action officielle pour cloner le repo
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
+      - name: Set up Java 17  # Étape pour installer Java 17
+        uses: actions/setup-java@v3  # Action officielle pour configurer Java
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: 'temurin'  # Distribution OpenJDK Temurin
+          java-version: '17'  # Version de Java à installer
 
-      - name: Build & Test Spring Boot
+      - name: Build & Test Spring Boot  # Étape pour compiler et tester le backend
         # Chemin exact vers le pom.xml
-        working-directory: Applications_Backend_(SpringBoot-API)/API_Infoline
+        working-directory: Infoline-Plateforme-Cloud-DevOps/Applications_Backend_(SpringBoot-API)/API_Infoline
+        # On se place dans le dossier du projet Spring Boot
         run: mvn clean package --batch-mode
+        # 'mvn clean package' compile, teste et package le projet dans un jar
+        # '--batch-mode' permet d'éviter les prompts interactifs pour CI/CD
 
-  dockerize-springboot:
+  dockerize-springboot:  # Job pour créer l'image Docker du backend
     name: Dockerize Spring Boot
-    runs-on: ubuntu-latest
-    needs: build-springboot
+    runs-on: ubuntu-latest  # Utilise aussi un runner Ubuntu
+    needs: build-springboot  # Ce job ne démarre qu'après la réussite du job 'build-springboot'
     steps:
-      - name: Checkout repository
+      - name: Checkout repository  # Récupération du code à nouveau
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        working-directory: Applications_Backend_(SpringBoot-API)/API_Infoline
+      - name: Build Docker image  # Étape pour construire l'image Docker
+        working-directory: Infoline-Plateforme-Cloud-DevOps/Applications_Backend_(SpringBoot-API)/API_Infoline
         run: |
-          docker build -t springboot-app .
+          docker build -t springboot-app .  
+          # 'docker build' crée une image Docker à partir du Dockerfile du dossier courant
+          # '-t springboot-app' nomme l'image 'springboot-app'
 
-  build-angular:
+  build-angular:  # Job pour construire le frontend Angular
     name: Build & Test Angular
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout repository  # Récupération du code frontend
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Set up Node.js  # Installer Node.js pour Angular
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '18'  # Version de Node.js à installer
 
-      - name: Cache node modules
+      - name: Cache node modules  # Mise en cache des dépendances pour accélérer les builds
         uses: actions/cache@v3
         with:
           path: Applications_Frontend_(Angular)/frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('Applications_Frontend_(Angular)/frontend/package-lock.json') }}
+          # La clé de cache dépend du package-lock.json : si ce fichier change, on reconstruit
           restore-keys: |
             ${{ runner.os }}-node-
+            # Si pas de correspondance exacte, GitHub essaie de restaurer un cache partiel
 
-      - name: Install Angular dependencies
+      - name: Install Angular dependencies  # Installer toutes les dépendances Node du projet
         working-directory: Applications_Frontend_(Angular)/frontend
-        run: npm install
+        run: npm install  # 'npm install' lit package.json et installe toutes les libs nécessaires
 
-      - name: Build Angular app
+      - name: Build Angular app  # Construire l'application Angular
         working-directory: Applications_Frontend_(Angular)/frontend
-        run: npm run build
+        run: npm run build  
+        # Compile le frontend pour production, crée un dossier 'dist/' avec les fichiers optimisés
