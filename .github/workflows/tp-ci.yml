@@ -15,6 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Step de debug pour lister tous les fichiers
+      - name: Debug - list files recursively
+        run: ls -R
+
       - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
@@ -22,7 +26,7 @@ jobs:
           java-version: '17'
 
       - name: Build & Test Spring Boot
-        # Chemin exact vers le pom.xml
+        # Chemin actuel vers le pom.xml
         working-directory: Applications_Backend_(SpringBoot-API)/API_Infoline
         run: mvn clean package --batch-mode
 
